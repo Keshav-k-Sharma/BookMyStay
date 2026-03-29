@@ -156,60 +156,70 @@ class RoomAllocationService {
     }
 }
 
-class Reservation {
+class Service {
 
-    private String guestName;
-    private String roomType;
+    private String serviceName;
+    private double cost;
 
-    public Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
-        this.roomType = roomType;
+    public Service(String serviceName, double cost) {
+        this.serviceName = serviceName;
+        this.cost = cost;
     }
 
-    public String getGuestName() {
-        return guestName;
+    public String getServiceName() {
+        return serviceName;
     }
 
-    public String getRoomType() {
-        return roomType;
+    public double getCost() {
+        return cost;
+    }
+}
+
+class AddOnServiceManager {
+
+    private Map<String, List<Service>> servicesByReservation;
+
+    public AddOnServiceManager() {
+        servicesByReservation = new HashMap<>();
+    }
+
+    public void addService(String reservationId, Service service) {
+
+        if (!servicesByReservation.containsKey(reservationId)) {
+            servicesByReservation.put(reservationId, new ArrayList<>());
+        }
+
+        servicesByReservation.get(reservationId).add(service);
+    }
+
+    public double calculateTotalServiceCost(String reservationId) {
+
+        double total = 0.0;
+
+        if (!servicesByReservation.containsKey(reservationId)) {
+            return total;
+        }
+
+        for (Service service : servicesByReservation.get(reservationId)) {
+            total += service.getCost();
+        }
+
+        return total;
     }
 }
 
-class BookingRequestQueue {
-
-    private Queue<Reservation> requestQueue;
-
-    public BookingRequestQueue() {
-        requestQueue = new LinkedList<>();
-    }
-
-    public void addRequest(Reservation reservation) {
-        requestQueue.offer(reservation);
-    }
-
-    public Reservation getNextRequest() {
-        return requestQueue.poll();
-    }
-
-    public boolean hasPendingRequests() {
-        return !requestQueue.isEmpty();
-    }
-}
 
 public class BookMyStay {
 
     public static void main(String[] args) {
-        System.out.println("Booking Request Queue\n");
 
         System.out.println("Room Allocation Processing\n");
 
-        Reservation r1 = new Reservation("Abhi", "Single");
-        Reservation r2 = new Reservation("Subha", "Double");
-        Reservation r3 = new Reservation("Vanmathi", "Suite");
+        RoomInventory inventory = new RoomInventory();
 
-        bookingQueue.addRequest(r1);
-        bookingQueue.addRequest(r2);
-        bookingQueue.addRequest(r3);
+        inventory.registerRoom("Single", 5);
+        inventory.registerRoom("Double", 3);
+        inventory.registerRoom("Suite", 3);
 
         BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
@@ -225,5 +235,20 @@ public class BookMyStay {
 
             allocationService.allocateRoom(reservation, inventory);
         }
+
+        System.out.println("\nAdd-On Service Selection");
+
+        AddOnServiceManager serviceManager = new AddOnServiceManager();
+
+        Service spa = new Service("Spa", 1500.0);
+
+        String reservationId = "Single-1";
+
+        serviceManager.addService(reservationId, spa);
+
+        double totalCost = serviceManager.calculateTotalServiceCost(reservationId);
+
+        System.out.println("Reservation ID: " + reservationId);
+        System.out.println("Total Add-On Cost: " + totalCost);
     }
 }
